@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import {usePathname} from "next/navigation";
-import { Show, SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import {cn} from "@/lib/utils";
 
 const navItems = [
@@ -13,15 +13,15 @@ const navItems = [
 ]
 
 const Navbar = () => {
-    const pathName = usePathname(); //allows program to read current URL's pathname string. 
+    const pathName = usePathname();
     const { user } = useUser();
 
     return (
         <header className="w-full fixed z-50 bg-(--bg-primary)">
             <div className="wrapper navbar-height py-4 flex justify-between items-center">
                 <Link href="/" className="flex gap-0.5 items-center">
-                    <Image src="/assets/logo.png" alt="ReportReader" width={42} height={26} />
-                    <span className="logo-text">Report Reader</span>
+                    <Image src="/assets/logo.png" alt="Bookfied" width={42} height={26} />
+                    <span className="logo-text">ReportReader</span>
                 </Link>
 
                 <nav className="w-fit flex gap-7.5 items-center">
@@ -36,11 +36,10 @@ const Navbar = () => {
                     })}
 
                     <div className="flex gap-7.5 items-center">
-                        <Show when="signed-out">
+                        <SignedOut>
                             <SignInButton mode="modal" />
-                            <SignUpButton mode="modal" />
-                        </Show>
-                        <Show when="signed-in">
+                        </SignedOut>
+                        <SignedIn>
                             <div className="nav-user-link">
                                 <UserButton />
                                 {user?.firstName && (
@@ -49,7 +48,7 @@ const Navbar = () => {
                                     </Link>
                                 )}
                             </div>
-                        </Show>
+                        </SignedIn>
                     </div>
                 </nav>
             </div>
