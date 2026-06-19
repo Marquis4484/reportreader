@@ -3,7 +3,7 @@
 import {EndSessionResult, StartSessionResult} from "@/types";
 import {connectToDatabase} from "@/database/mongoose";
 import VoiceSession from "@/database/models/voice-session.model";
-import {getCurrentBillingPeriodStart} from "@/lib/subscription-constants";
+// import {getCurrentBillingPeriodStart} from "@/lib/subscriptions-constants";
 
 export const startVoiceSession = async (clerkId: string, bookId: string): Promise<StartSessionResult> => {
     try {
@@ -11,7 +11,7 @@ export const startVoiceSession = async (clerkId: string, bookId: string): Promis
 
         // Limits/Plan to see whether a session is allowed.
         const { getUserPlan } = await import("@/lib/subscription.server");
-        const { PLAN_LIMITS, getCurrentBillingPeriodStart } = await import("@/lib/subscription-constants");
+        const { PLAN_LIMITS, getCurrentBillingPeriodStart } = await import("@/lib/subscriptions-constants");
 
         const plan = await getUserPlan();
         const limits = PLAN_LIMITS[plan];

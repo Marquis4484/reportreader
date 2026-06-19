@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth, useUser } from "@clerk/nextjs";
-import { PLANS, PLAN_LIMITS, PlanType } from "@/lib/subscription-constants";
+import { PLANS, PLAN_LIMITS, PlanType } from "@/lib/subscriptions-constants";
 
 export const useSubscription = () => {
     const { has, isLoaded: isAuthLoaded } = useAuth();
