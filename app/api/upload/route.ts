@@ -8,7 +8,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         const body = (await request.json()) as HandleUploadBody;
 
         const jsonResponse = await handleUpload({
-            token: process.env.reportreader_READ_WRITE_TOKEN,
+            token: process.env.reportReader_READ_WRITE_TOKEN,
             body,
             request,
             onBeforeGenerateToken: async () => {
@@ -25,11 +25,11 @@ export async function POST(request: Request): Promise<NextResponse> {
                     tokenPayload: JSON.stringify({ userId })
                 }
         } ,
-            onUploadCompleted: async ({ blob }) => {
+            onUploadCompleted: async ({ blob, tokenPayload }) => {
                 console.log('File uploaded to blob: ', blob.url)
 
-                // const payload = tokenPayload ? JSON.parse(tokenPayload): null
-                // const userId = payload?.userId;
+                const payload = tokenPayload ? JSON.parse(tokenPayload): null
+                const userId = payload?.userId;
 
                 // TODO: PostHog
             }

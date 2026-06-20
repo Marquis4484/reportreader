@@ -10,7 +10,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { ASSISTANT_ID, DEFAULT_VOICE, VOICE_SETTINGS } from '@/lib/constants';
 import { getVoice } from '@/lib/utils';
 import { IBook, Messages } from '@/types';
-import { startVoiceSession, endVoiceSession } from '@/lib/actions/sessions.actions';
+import { startVoiceSession, endVoiceSession } from '@/lib/actions/session.actions';
 
 export function useLatestRef<T>(value: T) {
     const ref = useRef(value);
@@ -25,7 +25,7 @@ export function useLatestRef<T>(value: T) {
 const VAPI_API_KEY = process.env.NEXT_PUBLIC_VAPI_API_KEY;
 const TIMER_INTERVAL_MS = 1000;
 const SECONDS_PER_MINUTE = 60;
-// const TIME_WARNING_THRESHOLD = 60; // Show warning when this many seconds remain
+const TIME_WARNING_THRESHOLD = 60; // Show warning when this many seconds remain
 
 let vapi: InstanceType<typeof Vapi>;
 function getVapi() {
@@ -210,15 +210,11 @@ export function useVapi(book: IBook) {
             getVapi().on(event as keyof typeof handlers, handler as () => void);
         });
 
-        const currentDurationRef = durationRef;
-
         return () => {
             // End active session on unmount
             if (sessionIdRef.current) {
-                const durationAtCleanup = currentDurationRef.current;
-
                 getVapi().stop();
-                endVoiceSession(sessionIdRef.current, durationAtCleanup).catch((err) =>
+                endVoiceSession(sessionIdRef.current, durationRef.current).catch((err) =>
                     console.error('Failed to end voice session on unmount:', err),
                 );
                 sessionIdRef.current = null;
@@ -229,7 +225,7 @@ export function useVapi(book: IBook) {
             });
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, [durationRef, maxDurationRef]);
+    }, []);
 
     const start = useCallback(async () => {
         if (!userId) {
@@ -299,10 +295,10 @@ export function useVapi(book: IBook) {
         status === 'speaking';
 
     // Calculate remaining time
-    // const maxDurationSeconds = limits.maxSessionMinutes * SECONDS_PER_MINUTE;
-    // const remainingSeconds = Math.max(0, maxDurationSeconds - duration);
-    // const showTimeWarning =
-    //     isActive && remainingSeconds <= TIME_WARNING_THRESHOLD && remainingSeconds > 0;
+    const maxDurationSeconds = limits.maxSessionMinutes * SECONDS_PER_MINUTE;
+    const remainingSeconds = Math.max(0, maxDurationSeconds - duration);
+    const showTimeWarning =
+        isActive && remainingSeconds <= TIME_WARNING_THRESHOLD && remainingSeconds > 0;
 
     return {
         status,
