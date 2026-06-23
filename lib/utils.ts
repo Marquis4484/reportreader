@@ -92,11 +92,11 @@ export const formatDuration = (seconds: number): string => {
 
 export async function parsePDFFile(file: File) {
   try {
-    const pdfjsLib = await import('pdfjs-dist');
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
     if (typeof window !== 'undefined') {
       pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-          'pdfjs-dist/build/pdf.worker.min.mjs',
+          'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
           import.meta.url,
       ).toString();
     }
@@ -122,6 +122,7 @@ export async function parsePDFFile(file: File) {
     }
 
     await firstPage.render({
+      canvas,
       canvasContext: context,
       viewport: viewport,
     }).promise;
