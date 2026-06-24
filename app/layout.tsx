@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { IBM_Plex_Serif, Mona_Sans} from "next/font/google";
-
 import Navbar from "@/components/Navbar";
 import "./globals.css";
 import {Toaster} from "@/components/ui/sonner";
