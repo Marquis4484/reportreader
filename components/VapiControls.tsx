@@ -1,6 +1,6 @@
 'use client';
 
-import {Mic, MicOff} from "lucide-react";
+import {Keyboard, Mic, MicOff, Send, Volume2} from "lucide-react";
 import useVapi from "@/hooks/useVapi";
 import {IBook} from "@/types";
 import Image from "next/image";
@@ -8,10 +8,28 @@ import Transcript from "@/components/Transcript";
 import {toast} from "sonner";
 
 import {useRouter} from "next/navigation";
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
+import type {FormEvent} from "react";
 
 const VapiControls = ({ book }: { book: IBook }) => {
-    const { status, isActive, messages, currentMessage, currentUserMessage, duration, start, stop, clearError, limitError, isBillingError, maxDurationSeconds } = useVapi(book)
+    const {
+        status,
+        isActive,
+        messages,
+        currentMessage,
+        currentUserMessage,
+        duration,
+        start,
+        stop,
+        sendTextMessage,
+        isTextMessagePending,
+        clearError,
+        limitError,
+        isBillingError,
+        maxDurationSeconds
+    } = useVapi(book)
+    const [inputMode, setInputMode] = useState<'voice' | 'keyboard'>('voice');
+    const [keyboardMessage, setKeyboardMessage] = useState('');
     const router = useRouter();
 
     useEffect(() => {
@@ -44,6 +62,27 @@ const VapiControls = ({ book }: { book: IBook }) => {
     };
 
     const statusDisplay = getStatusDisplay();
+    const isKeyboardMode = inputMode === 'keyboard';
+    const trimmedKeyboardMessage = keyboardMessage.trim();
+    const isKeyboardDisabled = !isActive || status === 'connecting' || status === 'starting' || isTextMessagePending;
+
+    const handleInputModeToggle = () => {
+        setInputMode((currentMode) => currentMode === 'voice' ? 'keyboard' : 'voice');
+    };
+
+    const handleKeyboardSubmit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (!trimmedKeyboardMessage || isKeyboardDisabled) {
+            return;
+        }
+
+        const wasSent = sendTextMessage(trimmedKeyboardMessage);
+
+        if (wasSent) {
+            setKeyboardMessage('');
+        }
+    };
 
     return (
         <>
@@ -61,28 +100,30 @@ const VapiControls = ({ book }: { book: IBook }) => {
                         />
                         <div className="vapi-mic-wrapper relative">
                             {isActive && (status === 'speaking' || status === 'thinking') && (
-                                <div className="absolute inset-0 rounded-full bg-white animate-ping opacity-75" />
+                                <div className="absolute inset-0 rounded-full bg-[var(--bg-card)] animate-ping opacity-75" />
                             )}
                             <button
+                                type="button"
                                 onClick={isActive ? stop : start}
                                 disabled={status === 'connecting'}
                                 className={`vapi-mic-btn shadow-md !w-[60px] !h-[60px] z-10 ${isActive ? 'vapi-mic-btn-active' : 'vapi-mic-btn-inactive'}`}
+                                aria-label={isActive ? 'Stop voice input' : 'Start voice input'}
                             >
                                 {isActive ? (
                                     <Mic className="size-7 text-white" />
                                 ) : (
-                                    <MicOff className="size-7 text-[#212a3b]" />
+                                    <MicOff className="size-7 text-[var(--text-primary)]" />
                                 )}
                             </button>
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-4 flex-1">
+                    <div className="flex flex-col gap-4 flex-1 min-w-0">
                         <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold font-serif text-[#212a3b] mb-1">
+                            <h1 className="text-2xl sm:text-3xl font-bold font-serif text-[var(--text-primary)] mb-1">
                                 {book.title}
                             </h1>
-                            <p className="text-[#3d485e] font-medium">by {book.author}</p>
+                            <p className="text-[var(--text-secondary)] font-medium">by {book.author}</p>
                         </div>
 
                         <div className="flex flex-wrap gap-3">
@@ -102,6 +143,24 @@ const VapiControls = ({ book }: { book: IBook }) => {
                             </div>
                         </div>
                     </div>
+
+                    <div className="vapi-input-mode-action">
+                        <button
+                            type="button"
+                            onClick={handleInputModeToggle}
+                            className="vapi-input-mode-btn"
+                            aria-label={isKeyboardMode ? 'Switch to voice input' : 'Switch to keyboard input'}
+                        >
+                            {isKeyboardMode ? (
+                                <Volume2 className="size-4" aria-hidden="true" />
+                            ) : (
+                                <Keyboard className="size-4" aria-hidden="true" />
+                            )}
+                            <span>
+                                {isKeyboardMode ? 'Switch to voice input' : 'Switch to keyboard input'}
+                            </span>
+                        </button>
+                    </div>
                 </div>
 
             <div className="vapi-transcript-wrapper">
@@ -111,6 +170,39 @@ const VapiControls = ({ book }: { book: IBook }) => {
                         currentMessage={currentMessage}
                         currentUserMessage={currentUserMessage}
                     />
+                </div>
+                <div
+                    className={`vapi-keyboard-input-panel ${
+                        isKeyboardMode ? 'vapi-keyboard-input-panel-visible' : 'vapi-keyboard-input-panel-hidden'
+                    }`}
+                    aria-hidden={!isKeyboardMode}
+                >
+                    <form className="vapi-keyboard-input-form" onSubmit={handleKeyboardSubmit}>
+                        <label htmlFor="vapi-keyboard-message" className="sr-only">
+                            Type a message to the voice assistant
+                        </label>
+                        <input
+                            id="vapi-keyboard-message"
+                            type="text"
+                            value={keyboardMessage}
+                            onChange={(event) => setKeyboardMessage(event.target.value)}
+                            className="vapi-keyboard-input"
+                            placeholder={isActive ? 'Type your message...' : 'Start the voice session to type a message'}
+                            aria-label="Type a message to the voice assistant"
+                            disabled={!isKeyboardMode || isKeyboardDisabled}
+                            tabIndex={isKeyboardMode ? 0 : -1}
+                        />
+                        <button
+                            type="submit"
+                            className="vapi-keyboard-submit-btn"
+                            disabled={!isKeyboardMode || isKeyboardDisabled || !trimmedKeyboardMessage}
+                            aria-label="Send typed message"
+                            tabIndex={isKeyboardMode ? 0 : -1}
+                        >
+                            <Send className="size-5" aria-hidden="true" />
+                            <span className="sr-only">Send</span>
+                        </button>
+                    </form>
                 </div>
             </div>
             </div>

@@ -51,6 +51,7 @@ export function useVapi(book: IBook) {
     const [duration, setDuration] = useState(0);
     const [limitError, setLimitError] = useState<string | null>(null);
     const [isBillingError, setIsBillingError] = useState(false);
+    const [isTextMessagePending, setIsTextMessagePending] = useState(false);
 
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const startTimeRef = useRef<number | null>(null);
@@ -100,6 +101,7 @@ export function useVapi(book: IBook) {
                 setStatus('idle');
                 setCurrentMessage('');
                 setCurrentUserMessage('');
+                setIsTextMessagePending(false);
 
                 // Stop timer
                 if (timerRef.current) {
@@ -121,6 +123,7 @@ export function useVapi(book: IBook) {
             'speech-start': () => {
                 if (!isStoppingRef.current) {
                     setStatus('speaking');
+                    setIsTextMessagePending(false);
                 }
             },
             'speech-end': () => {
@@ -155,6 +158,7 @@ export function useVapi(book: IBook) {
                 // Partial AI transcript → show word-by-word
                 if (message.role === 'assistant' && message.transcriptType === 'partial') {
                     setCurrentMessage(message.transcript);
+                    setIsTextMessagePending(false);
                     return;
                 }
 
@@ -162,6 +166,7 @@ export function useVapi(book: IBook) {
                 if (message.transcriptType === 'final') {
                     if (message.role === 'assistant') setCurrentMessage('');
                     if (message.role === 'user') setCurrentUserMessage('');
+                    if (message.role === 'assistant') setIsTextMessagePending(false);
 
                     setMessages((prev) => {
                         const isDupe = prev.some(
@@ -178,6 +183,7 @@ export function useVapi(book: IBook) {
                 setStatus('idle');
                 setCurrentMessage('');
                 setCurrentUserMessage('');
+                setIsTextMessagePending(false);
 
                 // Stop timer on error
                 if (timerRef.current) {
@@ -285,16 +291,56 @@ export function useVapi(book: IBook) {
         getVapi().stop();
     }, []);
 
-    const clearError = useCallback(() => {
-        setLimitError(null);
-        setIsBillingError(false);
-    }, []);
-
     const isActive =
         status === 'starting' ||
         status === 'listening' ||
         status === 'thinking' ||
         status === 'speaking';
+
+    const sendTextMessage = useCallback((content: string) => {
+        const trimmedContent = content.trim();
+
+        if (!trimmedContent || !isActive) {
+            return false;
+        }
+
+        setLimitError(null);
+        setIsTextMessagePending(true);
+        setStatus('thinking');
+
+        setMessages((prev) => {
+            const lastMessage = prev.at(-1);
+
+            if (lastMessage?.role === 'user' && lastMessage.content === trimmedContent) {
+                return prev;
+            }
+
+            return [...prev, { role: 'user', content: trimmedContent }];
+        });
+
+        try {
+            getVapi().send({
+                type: 'add-message',
+                triggerResponseEnabled: true,
+                message: {
+                    role: 'user',
+                    content: trimmedContent,
+                },
+            });
+            return true;
+        } catch (err) {
+            console.error('Failed to send text message:', err);
+            setIsTextMessagePending(false);
+            setStatus('listening');
+            setLimitError('Failed to send message. Please try again.');
+            return false;
+        }
+    }, [isActive]);
+
+    const clearError = useCallback(() => {
+        setLimitError(null);
+        setIsBillingError(false);
+    }, []);
 
     // Calculate remaining time
     const remainingSeconds = Math.max(0, maxDurationSeconds - duration);
@@ -310,6 +356,8 @@ export function useVapi(book: IBook) {
         duration,
         start,
         stop,
+        sendTextMessage,
+        isTextMessagePending,
         limitError,
         isBillingError,
         maxDurationSeconds,
