@@ -2,21 +2,17 @@
 
 ![Report Reader](public/assets/ReportReaderHome.png)
 
-**Report Reader** is an AI-powered document reading application built with Next.js, TypeScript, Clerk, MongoDB, Vercel Blob, and Vapi. The app lets users upload PDF documents, extract their text into searchable segments, choose an assistant voice, and discuss the uploaded material through an interactive voice or keyboard conversation.
+**Report Reader** is an AI-powered document reading application built with Next.js, TypeScript, Clerk, MongoDB, Vercel Blob, and Vapi. The app lets users upload PDF documents, extract their text into searchable segments, choose an assistant voice, and discuss the uploaded material through an interactive voice or keyboard conversation!
 
 ## Project Overview
 
-Report Reader is designed to make long documents easier to review by turning static PDFs into conversational reading sessions. Users can add a new document, provide its title and author, select an AI voice persona, and upload either a custom cover image or let the app generate one from the PDF's first page.
-
-After upload, the PDF is parsed in the browser with `pdfjs-dist`, split into overlapping text segments, and stored in MongoDB for search. The original PDF and cover image are uploaded to Vercel Blob. Each document appears in the library where authenticated users can open a voice session and ask questions about the material. Vapi powers the live assistant experience, while a document-search API gives the assistant access to relevant stored text segments.
-
-The app also includes Clerk authentication and subscription-aware limits for books, monthly sessions, and maximum session duration.
+Report Reader is designed to make long documents easier to review by turning static PDFs into conversational reading sessions. Users can add a new document, provide its title and author, select an AI voice persona, and upload either a custom cover image or use the cover from the PDF's first page.After upload, the PDF is parsed in the browser, split into overlapping text segments, and stored in MongoDB for search. Each document appears in the library where authenticated users can open a voice session and ask questions about the material. Vapi powers the live assistant experience, while a document search API gives the assistant access to relevant stored text segments. The app also includes Clerk authentication and subscription limits for uploaded documents, monthly sessions, and maximum session duration.
 
 ## Features
 
 - **Authenticated document library:** Clerk protects upload and reading experiences while the homepage displays the user's searchable document collection.
 - **PDF upload workflow:** Users upload a PDF, enter metadata, choose a voice persona, and optionally provide a cover image.
-- **Automatic PDF parsing:** `pdfjs-dist` extracts text from every page and renders the first page as a fallback cover image.
+- **Automatic PDF parsing:** The app extracts text from every page and renders the first page as a fallback cover image.
 - **Segmented document storage:** Extracted text is split into searchable MongoDB segments with word counts and segment indexes.
 - **Blob file storage:** PDFs and cover images are uploaded through Vercel Blob with authenticated upload handling.
 - **Duplicate document handling:** Documents are slugged from their titles, and matching uploads redirect to the existing document.
