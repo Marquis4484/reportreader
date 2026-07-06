@@ -3,11 +3,24 @@
 import {EndSessionResult, StartSessionResult} from "@/types";
 import {connectToDatabase} from "@/database/mongoose";
 import VoiceSession from "@/database/models/voice-session.model";
-import {getCurrentBillingPeriodStart} from "@/lib/subscription-constants";
+import Book from "@/database/models/book.model";
+import {auth} from "@clerk/nextjs/server";
 
 export const startVoiceSession = async (clerkId: string, bookId: string): Promise<StartSessionResult> => {
     try {
+        const { userId } = await auth();
+
+        if (!userId || userId !== clerkId) {
+            return { success: false, error: 'Unauthorized' };
+        }
+
         await connectToDatabase();
+
+        const book = await Book.findOne({ _id: bookId, clerkId: userId }).lean();
+
+        if (!book) {
+            return { success: false, error: 'Book not found.' };
+        }
 
         // Limits/Plan to see whether a session is allowed.
         const { getUserPlan } = await import("@/lib/subscription.server");
@@ -18,7 +31,7 @@ export const startVoiceSession = async (clerkId: string, bookId: string): Promis
         const billingPeriodStart = getCurrentBillingPeriodStart();
 
         const sessionCount = await VoiceSession.countDocuments({
-            clerkId,
+            clerkId: userId,
             billingPeriodStart
         });
 
@@ -34,7 +47,7 @@ export const startVoiceSession = async (clerkId: string, bookId: string): Promis
         }
 
         const session = await VoiceSession.create({
-            clerkId,
+            clerkId: userId,
             bookId,
             startedAt: new Date(),
             billingPeriodStart,
@@ -54,9 +67,15 @@ export const startVoiceSession = async (clerkId: string, bookId: string): Promis
 
 export const endVoiceSession = async (sessionId: string, durationSeconds: number): Promise<EndSessionResult> => {
     try {
+        const { userId } = await auth();
+
+        if (!userId) {
+            return { success: false, error: 'Unauthorized' };
+        }
+
         await connectToDatabase();
 
-        const result = await VoiceSession.findByIdAndUpdate(sessionId, {
+        const result = await VoiceSession.findOneAndUpdate({ _id: sessionId, clerkId: userId }, {
             endedAt: new Date(),
             durationSeconds,
         });
