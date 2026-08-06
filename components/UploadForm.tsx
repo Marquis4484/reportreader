@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,7 +47,7 @@ const UploadForm = () => {
 
         setIsSubmitting(true);
 
-        // PostHog -> Track Book Uploads...
+        // PostHog -> Track Uploads...
 
         try {
             const existsCheck = await checkBookExists(data.title);
