@@ -9,6 +9,7 @@ export default function SubscriptionsPage() {
           Upgrade to add more documents, longer sessions, and advanced features.
         </p>
       </div>
+      
 
       <div className="clerk-pricing-container">
         <PricingTable />
