@@ -10,6 +10,7 @@ export default function SubscriptionsPage() {
         </p>
       </div>
 
+
       <div className="clerk-pricing-container">
         <PricingTable />
       </div>
