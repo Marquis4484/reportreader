@@ -12,7 +12,7 @@ const Page = async ({ searchParams }: { searchParams: Promise<{ query?: string }
 
     const bookResults = userId ? await getAllBooks(query) : { success: true, data: [] }
     const books = bookResults.success ? bookResults.data ?? [] : []
-
+ 
     return (
         <main className="wrapper container">
             <HeroSection />

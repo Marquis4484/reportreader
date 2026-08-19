@@ -7,7 +7,7 @@ export default function SubscriptionsPage() {
         <h1 className="text-4xl font-bold font-serif mb-4">Choose Your Plan</h1>
         <p className="text-muted-foreground max-w-2xl">
           Upgrade to add more documents, longer sessions, and advanced features.
-        </p>
+        </p> 
       </div>
 
       <div className="clerk-pricing-container">
